@@ -14,7 +14,8 @@ app.use(express.json());
 
 
 const CORSoption = {
-  origin: "https://thandalfront.onrender.com", // frontend URL
+  origin: 
+  "https://thandalfront.onrender.com", 
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
