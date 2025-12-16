@@ -1,0 +1,159 @@
+@import url("https://fonts.googleapis.com/css2?family=Geom:ital,wght@0,300..900;1,300..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Oi&display=swap");
+body {
+  background-color: rgb(0, 0, 0);
+  font-family: "Geom", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 500;
+  font-style: normal;
+
+  padding: 0;
+}
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.Layer0 {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 20px; /* space between Layer1 and Layer2 */
+  padding: 20px;
+}
+.Layer0 h1 {
+  font-family: "Oi", serif;
+  font-weight: 300;
+  font-size: 50px;
+  font-style: normal;
+  width: 96vw;
+  padding: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 10px;
+  color: #000;
+ text-shadow: -3px -3px 0 blue,
+     3px -3px 0 blue,
+    -3px  3px 0 blue,
+     3px  3px 0 blue;;
+}
+
+.Layer1 {
+  display: flex;
+  justify-content: center;
+  background-color: #fff;
+  border-radius: 50px;
+  border-top: 4px solid#ff9800;
+  border-right: 4px solid #a855f7;
+  border-bottom: 4px solid #a855f7;
+  border-left: 4px solid#ff9800;
+  background: #e0e0e0;
+  transition: box-shadow 1.5s ease;
+  padding: 20px;
+  width: 300px;
+  height: 300px;
+}
+.Layer1:hover {
+  box-shadow: 5px 5px 20px #a855f7, -5px -5px 20px #ff9800;
+}
+.Layer1 input {
+  margin-top: 15px;
+}
+@media screen and (max-width: 764px) {
+  .Layer1 {
+    width: 70%;
+  }
+  .Layer0 h1 {
+    font-size: 30px;
+  }
+}
+input {
+  border-radius: 5px;
+  padding: 8px;
+  font-size: 14px;
+}
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.Layer2 {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  background-color: cadetblue;
+  border-radius: 5px;
+  box-shadow: 0 4px 12px rgb(12, 12, 12);
+}
+.searchbox {
+  position: absolute;
+  top: 5px;
+  right: 20px;
+}
+.cardContainer {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr; /* three equal columns */
+  gap: 15px;
+  justify-items: center;
+}
+.layer2Card {
+  margin-top: 70px;
+  text-align: center;
+  background-color: #ffffff8a;
+  width: 300px;
+  border-radius: 5px;
+  box-shadow: inset 0 -3em 3em rgba(0, 0, 0, 0.1), 0 0 0 2px rgb(190, 190, 190),
+    0.3em 0.3em 1em rgba(0, 0, 0, 0.3);
+  transition: border-radius 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@media screen and (max-width: 768px) {
+  .cardContainer {
+    display: grid;
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+  .layer2Card {
+    width: 200px;
+  }
+}
+.positive {
+  color: green;
+  font-weight: bolder;
+}
+.negative {
+  color: red;
+  font-weight: bolder;
+}
+button {
+  color: #090909;
+  padding: 0.7em 1.7em;
+  font-size: 18px;
+  border-radius: 0.5em;
+  background: #d8cf4a;
+  cursor: pointer;
+  border: 3px solid #e8e8e8;
+  transition: all 0.3s;
+  box-shadow: 6px 6px 12px #c5c5c5, -6px -6px 12px #ffffff;
+}
+
+button:active {
+  color: #666;
+  box-shadow: inset 4px 4px 12px #c5c5c5, inset -4px -4px 12px #ffffff;
+}
+/* From Uiverse.io by anniekoop */
+.input {
+  max-width: 190px;
+  padding: 0.875rem;
+  font-size: 1rem;
+  border: 1.5px solid #000;
+  border-radius: 0.5rem;
+  box-shadow: 2.5px 3px 0 rgba(0, 0, 0, 0.612);
+  outline: none;
+  transition: ease 0.25s;
+}
+
+.input:focus {
+  box-shadow: 5.5px 7px 0 black;
+}
