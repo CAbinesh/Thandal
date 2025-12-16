@@ -14,8 +14,8 @@ app.use(express.json());
 
 
 const CORSoption = {
-  origin: "https://thandal.onrender.com", // FIXED typo
-  credentials: true,              // FIXED
+  origin: "https://thandalfront.onrender.com", // frontend URL
+  credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 };
