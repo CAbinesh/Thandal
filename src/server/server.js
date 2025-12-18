@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import Transactions from "../Models/Transactions.js";
 import dotenv from "dotenv";
 import helmet from "helmet";
+import ratelimit from "express-rate-limit";
 
 dotenv.config();
 
@@ -12,10 +13,15 @@ const app = express();
 app.use(helmet());
 app.use(express.json());
 
+const limiter=ratelimit({
+  windowMs:15*60*1000,
+  max:50
+})
+app.use(limiter);
 
 const CORSoption = {
   origin: 
-  "https://thandalfront.onrender.com", 
+  "https://thandalfront.onrender.com",
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
@@ -57,6 +63,15 @@ app.post("/transactions", async (req, res) => {
     res.status(500).json(err);
   }
 });
+//Delete
+app.delete("/transactions/:id",async(req,res)=>{
+  try {
+    await Transactions.findByIdAndDelete(req.params.id);
+    res.json({message:"Deleted Successfully"})
+  } catch (err) {
+    res.status(500).json(err)
+  }
+})
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT} ✅`));

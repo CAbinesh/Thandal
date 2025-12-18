@@ -170,7 +170,7 @@ form {
   display: grid;
   grid-template-columns: repeat(3, 1fr); /* same as 1fr 1fr 1fr */
   gap: 15px; /* slightly larger gap for breathing room */
-  min-height: 100vh;
+  /* min-height: 100vh; */
   justify-items: center;
   padding-top: 80px; /* add top padding instead of large margin on cards */
   padding-left: 20px;
@@ -179,6 +179,7 @@ form {
 }
 
 .layer2Card {
+  position: relative;
   text-align: center;
   background-color: rgba(255, 255, 255, 0.54); /* #ffffff8a */
   width: 300px;
@@ -207,7 +208,7 @@ form {
   color: red;
   font-weight: bolder;
 }
-button {
+.btnsbt {
   color: #090909;
   padding: 0.7em 1.7em;
   font-size: 18px;
@@ -219,11 +220,26 @@ button {
   box-shadow: 6px 6px 12px #c5c5c5, -6px -6px 12px #ffffff;
 }
 
-button:active {
+.btnsbt:active,.btndlt:active {
   color: #666;
   box-shadow: inset 4px 4px 12px #c5c5c5, inset -4px -4px 12px #ffffff;
 }
-/* From Uiverse.io by anniekoop */
+.btndlt {
+  display: flex;
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  border-radius: 10px;
+  border: 1px solid white;
+  transition:  transform 0.3s ease, box-shadow 0.3s ease;
+}
+.btndlt:hover svg {
+  filter: drop-shadow(0 0 6px red);
+}
+.btndlt:active {
+  color: #bd4e4e;
+  box-shadow: inset 4px 4px 12px #ba2f2f, inset -4px -4px 12px #930e0e;
+}
 .input {
   max-width: 190px;
   padding: 0.875rem;
