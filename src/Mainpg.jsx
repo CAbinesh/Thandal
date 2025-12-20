@@ -19,7 +19,9 @@ const navigate=useNavigate();
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`${API_URL}/transactions`);
+        const res = await axios.get(`${API_URL}/transactions`,{
+  withCredentials: true,
+});
         setTransactions(res.data);
       } catch (error) {
         console.error("Error fetching data:", error);
