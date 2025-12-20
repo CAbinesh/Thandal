@@ -7,7 +7,7 @@ import dotenv from "dotenv";
 import helmet from "helmet";
 import ratelimit from "express-rate-limit";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
-import GithubStrategy from "passport-github";
+import {Strategy as GithubStrategy} from "passport-github";
 import passport from "passport";
 import JWT from "jsonwebtoken";
 import User from "../Models/User.js";
@@ -18,6 +18,7 @@ const app = express();
 app.use(helmet());
 app.use(express.json());
 app.use(cookieParser());
+
 const generateToken = (user) => {
   return JWT.sign(
     {
@@ -35,6 +36,7 @@ const limiter = ratelimit({
   max: 50,
 });
 app.use(limiter);
+
 const FRONTEND_URL = "https://thandalfront.onrender.com";
 const CORSoption = {
   origin: `${FRONTEND_URL}`,
@@ -45,6 +47,7 @@ const CORSoption = {
 
 app.use(cors(CORSoption));
 app.use(passport.initialize());
+
 passport.serializeUser((user, done) => {
   done(null, user._id);
 });
@@ -71,12 +74,12 @@ passport.use(
         let user = await User.findOne({ googleId: profile.id });
 
         if (!user) {
-          user = await User.create({
-            userName: profile.displayName,
-            email: profile.emails?.[0]?.value,
-            googleId: profile.id,
-            provider: "google",
-          });
+         user = await User.create({
+           userName: profile.displayName,
+           email: profile.emails?.[0]?.value,
+           googleId: profile.id,
+           provider: "google",
+         });
         }
 
         done(null, user);
@@ -101,6 +104,7 @@ app.get(
     const token = generateToken(req.user);
     res.cookie("token", token, {
       httpOnly: true,
+      secure: true,
       sameSite: "none",
     });
     res.redirect(`${FRONTEND_URL}/transactions`);
@@ -120,12 +124,12 @@ passport.use(
         let user = await User.findOne({ githubId: profile.id });
 
         if (!user) {
-          user = await User.create({
-            userName: profile.displayName,
-            email: profile.emails?.[0]?.value,
-            githubId: profile.id,
-            provider: "github",
-          });
+         user = await User.create({
+           userName: profile.displayName,
+           email: profile.emails?.[0]?.value,
+           githubId: profile.id,
+           provider: "github",
+         });
         }
 
         done(null, user);
@@ -150,13 +154,14 @@ app.get(
     const token = generateToken(req.user);
     res.cookie("token", token, {
       httpOnly: true,
+      secure: true,
       sameSite: "none",
     });
     res.redirect(`${FRONTEND_URL}/transactions`);
   }
 );
 
-// MongoDB connection (minimal fix)
+// MongoDB connection
 (async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI);
@@ -166,6 +171,7 @@ app.get(
     process.exit(1);
   }
 })();
+
 // Auth Middleware
 const middleware = (req, res, next) => {
   const token = req.cookies.token;
@@ -175,13 +181,15 @@ const middleware = (req, res, next) => {
     req.user = decoded;
     next();
   } catch (error) {
-    res.status(401).json({ error, message: "Ivalid token" });
+    res.status(401).json({ error, message: "Invalid token" });
   }
 };
+
 app.get("/me", middleware, async (req, res) => {
   const user = await User.findById(req.user.id).select("-__v");
   res.json(user);
 });
+
 // Logout
 app.post("/logout", (req, res) => {
   res.clearCookie("token", { httpOnly: true, secure: true, sameSite: "none" });
@@ -196,7 +204,8 @@ app.get("/transactions", middleware, limiter, async (req, res) => {
     });
     res.json(transactions);
   } catch (err) {
-    res.status(500).json(err);
+    console.error("GET Transactions Error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
@@ -204,28 +213,34 @@ app.get("/transactions", middleware, limiter, async (req, res) => {
 app.post("/transactions", middleware, limiter, async (req, res) => {
   try {
     const { takenAmnt, cltnAmnt, datee } = req.body;
-    const newTransaction = new Transactions(
-      { takenAmnt, cltnAmnt, datee, userId: req.user.id },
-      { withCredentials: true }
-    );
+    const newTransaction = new Transactions({
+      takenAmnt, 
+      cltnAmnt, 
+      datee, 
+      userId: req.user.id 
+    });
     const savedTransaction = await newTransaction.save();
     res.status(201).json(savedTransaction);
   } catch (err) {
     console.error("Insert Error:", err);
-    res.status(500).json(err);
+    res.status(500).json({ message: "Server error" });
   }
 });
-//Delete
+
+// Delete
 app.delete("/transactions/:id", middleware, limiter, async (req, res) => {
   try {
-    await Transactions.findOneAndDelete({
+    const result = await Transactions.findOneAndDelete({
       _id: req.params.id,
       userId: req.user.id,
-    }),
-      { withCredentials: true };
+    });
+    if (!result) {
+      return res.status(404).json({ message: "Transaction not found" });
+    }
     res.json({ message: "Deleted Successfully" });
   } catch (err) {
-    res.status(500).json(err);
+    console.error("Delete Error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
