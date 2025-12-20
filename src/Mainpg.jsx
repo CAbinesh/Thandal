@@ -1,7 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import axios from "axios";
 import "./index.css";
 import { ThumbsDown } from "lucide-react";
+import { LogOut } from "lucide-react";
+import { AuthContext } from "./App";
+import { useNavigate } from "react-router-dom";
 
 function Mainpg() {
   const [takenAmnt, setTakenAmnt] = useState("");
@@ -9,7 +12,8 @@ function Mainpg() {
   const [datee, setDatee] = useState("");
   const [transactions, setTransactions] = useState([]);
   const [searchDate, setSearchDate] = useState("");
-
+  const{setUser}=useContext(AuthContext);
+const navigate=useNavigate(); 
   const API_URL = import.meta.env.VITE_API_URL;
   // Fetch transactions
   useEffect(() => {
@@ -52,6 +56,18 @@ function Mainpg() {
       console.error("Delete failed", error);
     }
   };
+  const handleLogout=async()=>{
+    try {
+      await fetch(`${API_URL}/logout`,{
+        method:"POST",
+        credentials:"include"
+      });
+      setUser(null);
+      navigate('/login');
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  }
   // Filter by date
   const filteredTransactions = Array.isArray(transactions)
     ? transactions.filter((item) => {
@@ -66,6 +82,10 @@ function Mainpg() {
 
   return (
     <div className="Layer0">
+      <button className="logout" onClick={()=>handleLogout()}>
+        <LogOut className="Logout" size={20} strokeWidth={2} color="red" />
+        
+      </button>
       <div className="h1class">
         <h1>த ண் ட ல்</h1>
       </div>
@@ -113,7 +133,12 @@ function Mainpg() {
         </div>
 
         <div className="cardContainer">
-          {transactions.length === 0 && <p style={{fontSize:"30px"}}>No transactions found <ThumbsDown size={30} strokeWidth={2} color="white" /> </p>}
+          {transactions.length === 0 && (
+            <p style={{ fontSize: "30px" }}>
+              No transactions found{" "}
+              <ThumbsDown size={30} strokeWidth={2} color="white" />{" "}
+            </p>
+          )}
           {filteredTransactions.map((item) => {
             const remain =
               (Number(item.cltnAmnt) || 0) - (Number(item.takenAmnt) || 0);

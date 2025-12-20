@@ -15,7 +15,6 @@ input[type="number"]::-webkit-outer-spin-button {
   margin: 0;
 }
 .Layer0 {
-  
   height: 100%;
   /* Add your background pattern here */
   --sz: 15px;
@@ -98,10 +97,8 @@ input[type="number"]::-webkit-outer-spin-button {
   align-items: center;
   border-radius: 10px;
   color: #000;
- text-shadow: -3px -3px 0 blue,
-     3px -3px 0 blue,
-    -3px  3px 0 blue,
-     3px  3px 0 blue;;
+  text-shadow: -3px -3px 0 blue, 3px -3px 0 blue, -3px 3px 0 blue,
+    3px 3px 0 blue;
 }
 
 .Layer1 {
@@ -220,7 +217,8 @@ form {
   box-shadow: 6px 6px 12px #c5c5c5, -6px -6px 12px #ffffff;
 }
 
-.btnsbt:active,.btndlt:active {
+.btnsbt:active,
+.btndlt:active {
   color: #666;
   box-shadow: inset 4px 4px 12px #c5c5c5, inset -4px -4px 12px #ffffff;
 }
@@ -231,7 +229,7 @@ form {
   right: 5px;
   border-radius: 10px;
   border: 1px solid white;
-  transition:  transform 0.3s ease, box-shadow 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 .btndlt:hover svg {
   filter: drop-shadow(0 0 6px red);
@@ -239,6 +237,20 @@ form {
 .btndlt:active {
   color: #bd4e4e;
   box-shadow: inset 4px 4px 12px #ba2f2f, inset -4px -4px 12px #930e0e;
+}
+.logout {
+  display: flex;
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  border-radius: 40px;
+  padding: 10px;
+}
+@media screen and (max-width: 768px) {
+  .logout {
+    top: 10px;
+    right: 10px;
+  }
 }
 .input {
   max-width: 190px;
@@ -253,4 +265,51 @@ form {
 
 .input:focus {
   box-shadow: 5.5px 7px 0 black;
+}
+.loginPg {
+  display: flex; /* 👈 important */
+  flex-direction: column;
+  justify-content: center; /* vertical center */
+  align-items: center; /* horizontal center */
+  height: 100vh;
+  padding: 20px;
+  border: 5px solid white;
+}
+
+.loginpg2 {
+  display: flex;
+  width: 100%;
+  max-width: 400px;
+  justify-content: center; /* vertical center */
+  align-items: center;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+  border: 5px solid white;
+}
+.loginPg button {
+  width: 350px;
+  height: 70px;
+  cursor: pointer;
+  background-color: #171717;
+  color: #fff;
+  font-size: 24px;
+  gap: 18px;
+  border: none;
+  border-radius: 15px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.loginPg button:hover {
+  border-radius: 5px;
+  transform: translateY(-10px);
+  box-shadow: 0 7px 0 -2px #f85959, 0 15px 0 -4px #39a2db,
+    0 16px 10px -3px #39a2db;
+}
+
+.loginPg button:active {
+  transition: all 0.2s;
+  transform: translateY(-5px);
+  box-shadow: 0 2px 0 -2px #f85959, 0 8px 0 -4px #39a2db,
+    0 12px 10px -3px #39a2db;
 }
