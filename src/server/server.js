@@ -37,9 +37,9 @@ const limiter = ratelimit({
 });
 app.use(limiter);
 
-const FRONTEND_URL = "https://thandalfront.onrender.com";
+const FRONTEND_URL = process.env.FRONTEND_URL || "https://thandalfront.onrender.com";
 const CORSoption = {
-  origin: `${FRONTEND_URL}`,
+  origin: FRONTEND_URL,
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
@@ -48,20 +48,7 @@ const CORSoption = {
 app.use(cors(CORSoption));
 app.use(passport.initialize());
 
-passport.serializeUser((user, done) => {
-  done(null, user._id);
-});
-
-passport.deserializeUser(async (id, done) => {
-  try {
-    const user = await User.findById(id);
-    done(null, user);
-  } catch (err) {
-    done(err, null);
-  }
-});
-
-/* ---------- GOOGLE OAuth ---------- */
+/* ---------- GOOGLE OAuth (SESSIONLESS) ---------- */
 passport.use(
   new GoogleStrategy(
     {
@@ -72,18 +59,17 @@ passport.use(
     async (accessToken, refreshToken, profile, done) => {
       try {
         let user = await User.findOne({ googleId: profile.id });
-
         if (!user) {
-         user = await User.create({
-           userName: profile.displayName,
-           email: profile.emails?.[0]?.value,
-           googleId: profile.id,
-           provider: "google",
-         });
+          user = await User.create({
+            userName: profile.displayName,
+            email: profile.emails?.[0]?.value,
+            googleId: profile.id,
+            provider: "google",
+          });
         }
-
         done(null, user);
       } catch (error) {
+        console.error("Google Strategy Error:", error);
         done(error, null);
       }
     }
@@ -92,26 +78,36 @@ passport.use(
 
 app.get(
   "/auth/google",
-  passport.authenticate("google", { scope: ["profile", "email"] })
+  passport.authenticate("google", { 
+    scope: ["profile", "email"],
+    session: false
+  })
 );
 
 app.get(
   "/auth/google/callback",
   passport.authenticate("google", {
-    failureRedirect: `${FRONTEND_URL}/login`,
+    session: false,
+    failureRedirect: `${FRONTEND_URL}/login?error=google_auth_failed`,
   }),
   (req, res) => {
-    const token = generateToken(req.user);
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-    });
-    res.redirect(`${FRONTEND_URL}/transactions`);
+    try {
+      const token = generateToken(req.user);
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+        maxAge: 24 * 60 * 60 * 1000,
+      });
+      res.redirect(`${FRONTEND_URL}/transactions`);
+    } catch (error) {
+      console.error("Google Callback Error:", error);
+      res.redirect(`${FRONTEND_URL}/login?error=token_generation_failed`);
+    }
   }
 );
 
-/* ---------- GITHUB OAuth ---------- */
+/* ---------- GITHUB OAuth (SESSIONLESS) ---------- */
 passport.use(
   new GithubStrategy(
     {
@@ -122,18 +118,17 @@ passport.use(
     async (accessToken, refreshToken, profile, done) => {
       try {
         let user = await User.findOne({ githubId: profile.id });
-
         if (!user) {
-         user = await User.create({
-           userName: profile.displayName,
-           email: profile.emails?.[0]?.value,
-           githubId: profile.id,
-           provider: "github",
-         });
+          user = await User.create({
+            userName: profile.displayName,
+            email: profile.emails?.[0]?.value,
+            githubId: profile.id,
+            provider: "github",
+          });
         }
-
         done(null, user);
       } catch (error) {
+        console.error("Github Strategy Error:", error);
         done(error, null);
       }
     }
@@ -142,22 +137,32 @@ passport.use(
 
 app.get(
   "/auth/github",
-  passport.authenticate("github", { scope: ["user:email"] })
+  passport.authenticate("github", { 
+    scope: ["user:email"],
+    session: false
+  })
 );
 
 app.get(
   "/auth/github/callback",
   passport.authenticate("github", {
-    failureRedirect: `${FRONTEND_URL}/login`,
+    session: false,
+    failureRedirect: `${FRONTEND_URL}/login?error=github_auth_failed`,
   }),
   (req, res) => {
-    const token = generateToken(req.user);
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-    });
-    res.redirect(`${FRONTEND_URL}/transactions`);
+    try {
+      const token = generateToken(req.user);
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+        maxAge: 24 * 60 * 60 * 1000,
+      });
+      res.redirect(`${FRONTEND_URL}/transactions`);
+    } catch (error) {
+      console.error("Github Callback Error:", error);
+      res.redirect(`${FRONTEND_URL}/login?error=token_generation_failed`);
+    }
   }
 );
 
@@ -181,22 +186,28 @@ const middleware = (req, res, next) => {
     req.user = decoded;
     next();
   } catch (error) {
-    res.status(401).json({ error, message: "Invalid token" });
+    console.error("JWT Verify Error:", error);
+    res.status(401).json({ message: "Invalid token" });
   }
 };
 
+// ALL ROUTES - defined BEFORE global error handler
 app.get("/me", middleware, async (req, res) => {
-  const user = await User.findById(req.user.id).select("-__v");
-  res.json(user);
+  try {
+    const user = await User.findById(req.user.id).select("-__v");
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json(user);
+  } catch (error) {
+    console.error("GET /me Error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
-// Logout
 app.post("/logout", (req, res) => {
   res.clearCookie("token", { httpOnly: true, secure: true, sameSite: "none" });
   res.json({ message: "Logged out" });
 });
 
-// GET all transactions
 app.get("/transactions", middleware, limiter, async (req, res) => {
   try {
     const transactions = await Transactions.find({ userId: req.user.id }).sort({
@@ -209,7 +220,6 @@ app.get("/transactions", middleware, limiter, async (req, res) => {
   }
 });
 
-// POST a new transaction
 app.post("/transactions", middleware, limiter, async (req, res) => {
   try {
     const { takenAmnt, cltnAmnt, datee } = req.body;
@@ -222,12 +232,11 @@ app.post("/transactions", middleware, limiter, async (req, res) => {
     const savedTransaction = await newTransaction.save();
     res.status(201).json(savedTransaction);
   } catch (err) {
-    console.error("Insert Error:", err);
+    console.error("POST Transactions Error:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
 
-// Delete
 app.delete("/transactions/:id", middleware, limiter, async (req, res) => {
   try {
     const result = await Transactions.findOneAndDelete({
@@ -239,9 +248,27 @@ app.delete("/transactions/:id", middleware, limiter, async (req, res) => {
     }
     res.json({ message: "Deleted Successfully" });
   } catch (err) {
-    console.error("Delete Error:", err);
+    console.error("DELETE Transactions Error:", err);
     res.status(500).json({ message: "Server error" });
   }
+});
+
+// GLOBAL ERROR HANDLER - MUST BE LAST (after all routes)
+app.use((error, req, res) => {
+  console.error("Global Error Handler - Path:", req.path, "Error:", error);
+  
+  // For OAuth paths, redirect to frontend
+  if (req.path.includes('/auth/')) {
+    return res.redirect(`${FRONTEND_URL}/login?error=auth_failed`);
+  }
+  
+  // For API routes, return JSON
+  res.status(500).json({ message: "Server error" });
+});
+
+// 404 handler - also after all routes
+app.use((req, res) => {
+  res.status(404).json({ message: "Route not found" });
 });
 
 const PORT = process.env.PORT || 5000;
