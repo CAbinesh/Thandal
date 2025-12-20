@@ -37,10 +37,9 @@ const limiter = ratelimit({
   max: 50,
 });
 app.use(limiter);
-const FRONTEND_URL = "http://localhost:5173";
+const FRONTEND_URL = "https://thandalfront.onrender.com";
 const CORSoption = {
   origin:
-    // "https://thandalfront.onrender.com",
     `${FRONTEND_URL}`,
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -94,7 +93,7 @@ app.get(
     const token = generateToken(req.user);
     res.cookie("token", token, {
       httpOnly: true,
-      sameSite: "lax",
+      sameSite: "none",
     });
     res.redirect(`${FRONTEND_URL}/transactions`);
   }
@@ -142,7 +141,7 @@ app.get(
     const token = generateToken(req.user);
     res.cookie("token", token, {
       httpOnly: true,
-      sameSite: "lax",
+      sameSite: "none",
     });
     res.redirect(`${FRONTEND_URL}/transactions`);
   }
@@ -176,7 +175,7 @@ app.get("/me",middleware, async(req, res) =>{
 });
 // Logout
 app.post("/logout", (req, res) => {
-  res.clearCookie("token", { httpOnly: true, secure: true, sameSite: "lax" });
+  res.clearCookie("token", { httpOnly: true, secure: true, sameSite: "none" });
   res.json({ message: "Logged out" });
 });
 
