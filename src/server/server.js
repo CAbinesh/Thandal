@@ -35,8 +35,7 @@ const limiter = ratelimit({
   max: 50,
 });
 app.use(limiter);
-const FRONTEND_URL = 
-"https://thandalfront.onrender.com";
+const FRONTEND_URL = "https://thandalfront.onrender.com";
 const CORSoption = {
   origin: `${FRONTEND_URL}`,
   credentials: true,
@@ -46,6 +45,18 @@ const CORSoption = {
 
 app.use(cors(CORSoption));
 app.use(passport.initialize());
+passport.serializeUser((user, done) => {
+  done(null, user._id);
+});
+
+passport.deserializeUser(async (id, done) => {
+  try {
+    const user = await User.findById(id);
+    done(null, user);
+  } catch (err) {
+    done(err, null);
+  }
+});
 
 /* ---------- GOOGLE OAuth ---------- */
 passport.use(
@@ -132,9 +143,9 @@ app.get(
 
 app.get(
   "/auth/github/callback",
- passport.authenticate("github", {
-  failureRedirect: `${FRONTEND_URL}/login`,
-}),
+  passport.authenticate("github", {
+    failureRedirect: `${FRONTEND_URL}/login`,
+  }),
   (req, res) => {
     const token = generateToken(req.user);
     res.cookie("token", token, {
