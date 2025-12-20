@@ -38,6 +38,7 @@ const limiter = ratelimit({
 app.use(limiter);
 
 const FRONTEND_URL = process.env.FRONTEND_URL || "https://thandalfront.onrender.com";
+const BACKEND_URL = process.env.BACKEND_URL || "https://thandal.onrender.com";
 const CORSoption = {
   origin: FRONTEND_URL,
   credentials: true,
@@ -95,7 +96,7 @@ app.get(
       const token = generateToken(req.user);
       res.cookie("token", token, {
         httpOnly: true,
-        secure: true,
+        secure: process.env.NODE_ENV === 'production',
         sameSite: "none",
         maxAge: 24 * 60 * 60 * 1000,
       });
@@ -154,7 +155,7 @@ app.get(
       const token = generateToken(req.user);
       res.cookie("token", token, {
         httpOnly: true,
-        secure: true,
+        secure: process.env.NODE_ENV === 'production',
         sameSite: "none",
         maxAge: 24 * 60 * 60 * 1000,
       });
@@ -191,7 +192,12 @@ const middleware = (req, res, next) => {
   }
 };
 
-// ALL ROUTES - defined BEFORE global error handler
+// Health check endpoint
+app.get("/health", (req, res) => {
+  res.json({ status: "OK", timestamp: new Date().toISOString() });
+});
+
+// API Routes
 app.get("/me", middleware, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-__v");
@@ -204,12 +210,17 @@ app.get("/me", middleware, async (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie("token", { httpOnly: true, secure: true, sameSite: "none" });
+  res.clearCookie("token", { 
+    httpOnly: true, 
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: "none" 
+  });
   res.json({ message: "Logged out" });
 });
 
 app.get("/transactions", middleware, limiter, async (req, res) => {
   try {
+    console.log("Fetching transactions for user:", req.user.id);
     const transactions = await Transactions.find({ userId: req.user.id }).sort({
       datee: -1,
     });
@@ -223,6 +234,8 @@ app.get("/transactions", middleware, limiter, async (req, res) => {
 app.post("/transactions", middleware, limiter, async (req, res) => {
   try {
     const { takenAmnt, cltnAmnt, datee } = req.body;
+    console.log("Creating transaction:", { takenAmnt, cltnAmnt, datee, userId: req.user.id });
+    
     const newTransaction = new Transactions({
       takenAmnt, 
       cltnAmnt, 
@@ -257,19 +270,22 @@ app.delete("/transactions/:id", middleware, limiter, async (req, res) => {
 app.use((error, req, res) => {
   console.error("Global Error Handler - Path:", req.path, "Error:", error);
   
-  // For OAuth paths, redirect to frontend
   if (req.path.includes('/auth/')) {
     return res.redirect(`${FRONTEND_URL}/login?error=auth_failed`);
   }
   
-  // For API routes, return JSON
   res.status(500).json({ message: "Server error" });
 });
 
-// 404 handler - also after all routes
+// 404 handler - catches all unmatched routes
 app.use((req, res) => {
+  console.log("404 - Route not found:", req.method, req.path);
   res.status(404).json({ message: "Route not found" });
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT} ✅`));
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT} ✅`);
+  console.log(`Backend URL: ${BACKEND_URL}`);
+  console.log(`Frontend URL: ${FRONTEND_URL}`);
+});
