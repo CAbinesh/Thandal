@@ -35,8 +35,8 @@ const limiter = ratelimit({
   max: 50,
 });
 app.use(limiter);
-const FRONTEND_URL = "http://localhost:5173";
-// "https://thandalfront.onrender.com";
+const FRONTEND_URL = 
+"https://thandalfront.onrender.com";
 const CORSoption = {
   origin: `${FRONTEND_URL}`,
   credentials: true,
