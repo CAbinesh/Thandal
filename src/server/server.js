@@ -6,7 +6,7 @@ import Transactions from "../Models/Transactions.js";
 import dotenv from "dotenv";
 import helmet from "helmet";
 import ratelimit from "express-rate-limit";
-import GoogleStrategy from "passport-google-oauth20";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import GithubStrategy from "passport-github";
 import passport from "passport";
 import JWT from "jsonwebtoken";
@@ -25,22 +25,20 @@ const generateToken = (user) => {
       email: user.email,
       provider: user.provider,
     },
-     process.env.JWT_SECRET,
+    process.env.JWT_SECRET,
     { expiresIn: "1d" }
   );
 };
-
-
 
 const limiter = ratelimit({
   windowMs: 15 * 60 * 1000,
   max: 50,
 });
 app.use(limiter);
-const FRONTEND_URL = "https://thandalfront.onrender.com";
+const FRONTEND_URL = "http://localhost:5173";
+// "https://thandalfront.onrender.com";
 const CORSoption = {
-  origin:
-    `${FRONTEND_URL}`,
+  origin: `${FRONTEND_URL}`,
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
@@ -48,8 +46,6 @@ const CORSoption = {
 
 app.use(cors(CORSoption));
 app.use(passport.initialize());
-
-
 
 /* ---------- GOOGLE OAuth ---------- */
 passport.use(
@@ -80,7 +76,6 @@ passport.use(
   )
 );
 
-
 app.get(
   "/auth/google",
   passport.authenticate("google", { scope: ["profile", "email"] })
@@ -88,7 +83,9 @@ app.get(
 
 app.get(
   "/auth/google/callback",
-  passport.authenticate("google", { failureRedirect: "/login" }),
+  passport.authenticate("google", {
+    failureRedirect: `${FRONTEND_URL}/login`,
+  }),
   (req, res) => {
     const token = generateToken(req.user);
     res.cookie("token", token, {
@@ -128,7 +125,6 @@ passport.use(
   )
 );
 
-
 app.get(
   "/auth/github",
   passport.authenticate("github", { scope: ["user:email"] })
@@ -136,7 +132,9 @@ app.get(
 
 app.get(
   "/auth/github/callback",
-   passport.authenticate("github", { failureRedirect: "/login" }),
+ passport.authenticate("github", {
+  failureRedirect: `${FRONTEND_URL}/login`,
+}),
   (req, res) => {
     const token = generateToken(req.user);
     res.cookie("token", token, {
@@ -169,8 +167,8 @@ const middleware = (req, res, next) => {
     res.status(401).json({ error, message: "Ivalid token" });
   }
 };
-app.get("/me",middleware, async(req, res) =>{
-  const user=await User.findById(req.user.id).select("-__v");;
+app.get("/me", middleware, async (req, res) => {
+  const user = await User.findById(req.user.id).select("-__v");
   res.json(user);
 });
 // Logout
@@ -182,7 +180,9 @@ app.post("/logout", (req, res) => {
 // GET all transactions
 app.get("/transactions", middleware, limiter, async (req, res) => {
   try {
-    const transactions = await Transactions.find({userId:req.user.id}).sort({ datee: -1 });
+    const transactions = await Transactions.find({ userId: req.user.id }).sort({
+      datee: -1,
+    });
     res.json(transactions);
   } catch (err) {
     res.status(500).json(err);
@@ -193,7 +193,10 @@ app.get("/transactions", middleware, limiter, async (req, res) => {
 app.post("/transactions", middleware, limiter, async (req, res) => {
   try {
     const { takenAmnt, cltnAmnt, datee } = req.body;
-    const newTransaction = new Transactions({ takenAmnt, cltnAmnt, datee,userId:req.user.id }, { withCredentials: true });
+    const newTransaction = new Transactions(
+      { takenAmnt, cltnAmnt, datee, userId: req.user.id },
+      { withCredentials: true }
+    );
     const savedTransaction = await newTransaction.save();
     res.status(201).json(savedTransaction);
   } catch (err) {
@@ -204,7 +207,11 @@ app.post("/transactions", middleware, limiter, async (req, res) => {
 //Delete
 app.delete("/transactions/:id", middleware, limiter, async (req, res) => {
   try {
-    await Transactions.findOneAndDelete({_id:req.params.id,userId:req.user.id}), { withCredentials: true };
+    await Transactions.findOneAndDelete({
+      _id: req.params.id,
+      userId: req.user.id,
+    }),
+      { withCredentials: true };
     res.json({ message: "Deleted Successfully" });
   } catch (err) {
     res.status(500).json(err);
