@@ -2,53 +2,45 @@
 import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
-import Transactions from "../Models/Transactions.js";
 import dotenv from "dotenv";
 import helmet from "helmet";
-import ratelimit from "express-rate-limit";
-import { Strategy as GoogleStrategy } from "passport-google-oauth20";
-import GithubStrategy from "passport-github";
+import rateLimit from "express-rate-limit";
 import passport from "passport";
-import JWT from "jsonwebtoken";
-import User from "../Models/User.js";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+import { Strategy as GithubStrategy } from "passport-github";
+import jwt from "jsonwebtoken";
 import cookieParser from "cookie-parser";
+
+import User from "../Models/User.js";
+import Transactions from "../Models/Transactions.js";
+
 dotenv.config();
 
 const app = express();
+
+/* ---------- MIDDLEWARE ---------- */
 app.use(helmet());
 app.use(express.json());
 app.use(cookieParser());
-const generateToken = (user) => {
-  return JWT.sign(
-    {
-      id: user._id,
-      email: user.email,
-      provider: user.provider,
-    },
-    process.env.JWT_SECRET,
-    { expiresIn: "1d" }
-  );
-};
 
-const limiter = ratelimit({
-  windowMs: 15 * 60 * 1000,
-  max: 50,
-});
-app.use(limiter);
-const FRONTEND_URL = "https://thandalfront.onrender.com";
-const CORSoption = {
-  origin: `${FRONTEND_URL}`,
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-};
+app.use(
+  cors({
+    origin: "https://thandalfront.onrender.com",
+    credentials: true,
+  })
+);
 
-app.use(cors(CORSoption));
+app.use(
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+  })
+);
+
 app.use(passport.initialize());
-passport.serializeUser((user, done) => {
-  done(null, user._id);
-});
 
+/* ---------- PASSPORT SERIALIZE ---------- */
+passport.serializeUser((user, done) => done(null, user.id));
 passport.deserializeUser(async (id, done) => {
   try {
     const user = await User.findById(id);
@@ -58,7 +50,15 @@ passport.deserializeUser(async (id, done) => {
   }
 });
 
-/* ---------- GOOGLE OAuth ---------- */
+/* ---------- JWT ---------- */
+const generateToken = (user) =>
+  jwt.sign(
+    { id: user._id, email: user.email, provider: user.provider },
+    process.env.JWT_SECRET,
+    { expiresIn: "1d" }
+  );
+
+/* ---------- GOOGLE OAUTH ---------- */
 passport.use(
   new GoogleStrategy(
     {
@@ -66,48 +66,48 @@ passport.use(
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       callbackURL: `${process.env.REDIRECT_URL}/auth/google/callback`,
     },
-    async (accessToken, refreshToken, profile, done) => {
+    async (_, __, profile, done) => {
       try {
         let user = await User.findOne({ googleId: profile.id });
 
         if (!user) {
           user = await User.create({
-            userName: profile.displayName,
-            email: profile.emails?.[0]?.value,
+            userName: profile.displayName || "Google User",
+            email: profile.emails?.[0]?.value || null,
             googleId: profile.id,
             provider: "google",
           });
         }
 
         done(null, user);
-      } catch (error) {
-        done(error, null);
+      } catch (err) {
+        done(err, null);
       }
     }
   )
 );
 
-app.get(
-  "/auth/google",
+app.get("/auth/google",
   passport.authenticate("google", { scope: ["profile", "email"] })
 );
 
 app.get(
   "/auth/google/callback",
-  passport.authenticate("google", {
-    failureRedirect: `${FRONTEND_URL}/login`,
-  }),
+  passport.authenticate("google", { failureRedirect: "/" }),
   (req, res) => {
     const token = generateToken(req.user);
+
     res.cookie("token", token, {
       httpOnly: true,
+      secure: true,
       sameSite: "none",
     });
-    res.redirect(`${FRONTEND_URL}/transactions`);
+
+    res.redirect("https://thandalfront.onrender.com/transactions");
   }
 );
 
-/* ---------- GITHUB OAuth ---------- */
+/* ---------- GITHUB OAUTH ---------- */
 passport.use(
   new GithubStrategy(
     {
@@ -115,119 +115,99 @@ passport.use(
       clientSecret: process.env.GITHUB_CLIENT_SECRET,
       callbackURL: `${process.env.REDIRECT_URL}/auth/github/callback`,
     },
-    async (accessToken, refreshToken, profile, done) => {
+    async (_, __, profile, done) => {
       try {
         let user = await User.findOne({ githubId: profile.id });
 
         if (!user) {
           user = await User.create({
-            userName: profile.displayName,
-            email: profile.emails?.[0]?.value,
+            userName: profile.username,
+            email: profile.emails?.[0]?.value || null,
             githubId: profile.id,
             provider: "github",
           });
         }
 
         done(null, user);
-      } catch (error) {
-        done(error, null);
+      } catch (err) {
+        done(err, null);
       }
     }
   )
 );
 
-app.get(
-  "/auth/github",
+app.get("/auth/github",
   passport.authenticate("github", { scope: ["user:email"] })
 );
 
 app.get(
   "/auth/github/callback",
-  passport.authenticate("github", {
-    failureRedirect: `${FRONTEND_URL}/login`,
-  }),
+  passport.authenticate("github", { failureRedirect: "/" }),
   (req, res) => {
     const token = generateToken(req.user);
+
     res.cookie("token", token, {
       httpOnly: true,
+      secure: true,
       sameSite: "none",
     });
-    res.redirect(`${FRONTEND_URL}/transactions`);
+
+    res.redirect("https://thandalfront.onrender.com/transactions");
   }
 );
 
-// MongoDB connection (minimal fix)
-(async () => {
+/* ---------- AUTH MIDDLEWARE ---------- */
+const auth = (req, res, next) => {
   try {
-    await mongoose.connect(process.env.MONGO_URI);
-    console.log("MongoDB Connected ✅");
-  } catch (error) {
-    console.error("MongoDB Connection Error ❌:", error.message);
-    process.exit(1);
-  }
-})();
-// Auth Middleware
-const middleware = (req, res, next) => {
-  const token = req.cookies.token;
-  if (!token) return res.status(401).json({ message: "not authenticated" });
-  try {
-    const decoded = JWT.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
+    const token = req.cookies.token;
+    if (!token) return res.status(401).json({ message: "Unauthenticated" });
+
+    req.user = jwt.verify(token, process.env.JWT_SECRET);
     next();
-  } catch (error) {
-    res.status(401).json({ error, message: "Ivalid token" });
+  } catch {
+    res.status(401).json({ message: "Invalid token" });
   }
 };
-app.get("/me", middleware, async (req, res) => {
+
+/* ---------- API ---------- */
+app.get("/me", auth, async (req, res) => {
   const user = await User.findById(req.user.id).select("-__v");
   res.json(user);
 });
-// Logout
-app.post("/logout", (req, res) => {
-  res.clearCookie("token", { httpOnly: true, secure: true, sameSite: "none" });
+
+app.post("/logout", (_, res) => {
+  res.clearCookie("token", { secure: true, sameSite: "none" });
   res.json({ message: "Logged out" });
 });
 
-// GET all transactions
-app.get("/transactions", middleware, limiter, async (req, res) => {
-  try {
-    const transactions = await Transactions.find({ userId: req.user.id }).sort({
-      datee: -1,
-    });
-    res.json(transactions);
-  } catch (err) {
-    res.status(500).json(err);
-  }
+app.get("/transactions", auth, async (req, res) => {
+  const data = await Transactions.find({ userId: req.user.id }).sort({ datee: -1 });
+  res.json(data);
 });
 
-// POST a new transaction
-app.post("/transactions", middleware, limiter, async (req, res) => {
-  try {
-    const { takenAmnt, cltnAmnt, datee } = req.body;
-    const newTransaction = new Transactions(
-      { takenAmnt, cltnAmnt, datee, userId: req.user.id },
-      { withCredentials: true }
-    );
-    const savedTransaction = await newTransaction.save();
-    res.status(201).json(savedTransaction);
-  } catch (err) {
-    console.error("Insert Error:", err);
-    res.status(500).json(err);
-  }
-});
-//Delete
-app.delete("/transactions/:id", middleware, limiter, async (req, res) => {
-  try {
-    await Transactions.findOneAndDelete({
-      _id: req.params.id,
-      userId: req.user.id,
-    }),
-      { withCredentials: true };
-    res.json({ message: "Deleted Successfully" });
-  } catch (err) {
-    res.status(500).json(err);
-  }
+app.post("/transactions", auth, async (req, res) => {
+  const tx = await Transactions.create({
+    ...req.body,
+    userId: req.user.id,
+  });
+  res.status(201).json(tx);
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT} ✅`));
+app.delete("/transactions/:id", auth, async (req, res) => {
+  await Transactions.findOneAndDelete({
+    _id: req.params.id,
+    userId: req.user.id,
+  });
+  res.json({ message: "Deleted" });
+});
+
+/* ---------- DB ---------- */
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB connected ✅"))
+  .catch((err) => console.error("Mongo error ❌", err));
+
+/* ---------- START ---------- */
+app.listen(process.env.PORT || 5000, () =>
+  console.log("Server running ✅")
+);
