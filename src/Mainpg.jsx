@@ -1,8 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import axios from "axios";
 import "./index.css";
-import { ThumbsDown } from "lucide-react";
-import { LogOut } from "lucide-react";
+import { ThumbsDown, LogOut } from "lucide-react";
 import { AuthContext } from "./App";
 import { useNavigate } from "react-router-dom";
 
@@ -12,16 +11,14 @@ function Mainpg() {
   const [datee, setDatee] = useState("");
   const [transactions, setTransactions] = useState([]);
   const [searchDate, setSearchDate] = useState("");
-  const{setUser}=useContext(AuthContext);
-const navigate=useNavigate(); 
+  const { setUser } = useContext(AuthContext);
+  const navigate = useNavigate();
   const API_URL = import.meta.env.VITE_API_URL;
-  // Fetch transactions
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`${API_URL}/transactions`,{
-  withCredentials: true,
-});
+        const res = await axios.get(`${API_URL}/transactions`, { withCredentials: true });
         setTransactions(res.data);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -30,18 +27,15 @@ const navigate=useNavigate();
     fetchData();
   }, [API_URL]);
 
-  // Submit form
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post(`${API_URL}/transactions`, {
-        takenAmnt,
-        cltnAmnt,
-        datee, // ✅ correct field
-      });
-
+      const res = await axios.post(
+        `${API_URL}/transactions`,
+        { takenAmnt, cltnAmnt, datee },
+        { withCredentials: true }
+      );
       setTransactions((prev) => [res.data, ...prev]);
-
       setTakenAmnt("");
       setCltnAmnt("");
       setDatee("");
@@ -49,44 +43,39 @@ const navigate=useNavigate();
       console.error("Insert error:", error);
     }
   };
+
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure to delete ❌")) return;
     try {
-      await axios.delete(`${API_URL}/transactions/${id}`);
+      await axios.delete(`${API_URL}/transactions/${id}`, { withCredentials: true });
       setTransactions((prev) => prev.filter((item) => item._id !== id));
     } catch (error) {
       console.error("Delete failed", error);
     }
   };
-  const handleLogout=async()=>{
+
+  const handleLogout = async () => {
     try {
-      await fetch(`${API_URL}/logout`,{
-        method:"POST",
-        credentials:"include"
-      });
+      await fetch(`${API_URL}/logout`, { method: "POST", credentials: "include" });
       setUser(null);
-      navigate('/login');
+      navigate("/login");
     } catch (error) {
       console.error("Logout failed:", error);
     }
-  }
-  // Filter by date
+  };
+
   const filteredTransactions = Array.isArray(transactions)
     ? transactions.filter((item) => {
         if (!searchDate) return true;
         if (!item.datee) return false;
-
-        const itemDate = new Date(item.datee).toISOString().slice(0, 10);
-
-        return itemDate === searchDate;
+        return new Date(item.datee).toISOString().slice(0, 10) === searchDate;
       })
     : [];
 
   return (
     <div className="Layer0">
-      <button className="logout" onClick={()=>handleLogout()}>
+      <button className="logout" onClick={handleLogout}>
         <LogOut className="Logout" size={20} strokeWidth={2} color="red" />
-        
       </button>
       <div className="h1class">
         <h1>த ண் ட ல்</h1>
@@ -137,26 +126,18 @@ const navigate=useNavigate();
         <div className="cardContainer">
           {transactions.length === 0 && (
             <p style={{ fontSize: "30px" }}>
-              No transactions found{" "}
-              <ThumbsDown size={30} strokeWidth={2} color="white" />{" "}
+              No transactions found <ThumbsDown size={30} strokeWidth={2} color="white" />
             </p>
           )}
           {filteredTransactions.map((item) => {
-            const remain =
-              (Number(item.cltnAmnt) || 0) - (Number(item.takenAmnt) || 0);
-
+            const remain = (Number(item.cltnAmnt) || 0) - (Number(item.takenAmnt) || 0);
             return (
               <div key={item._id} className="layer2Card">
                 <h4>{item.datee?.slice(0, 10)}</h4>
                 <p>எடுத்துச்சென்றது: {item.takenAmnt}</p>
                 <p>வரவு: {item.cltnAmnt}</p>
-                <p className={remain >= 0 ? "positive" : "negative"}>
-                  {remain}
-                </p>
-                <button
-                  className="btndlt"
-                  onClick={() => handleDelete(item._id)}
-                >
+                <p className={remain >= 0 ? "positive" : "negative"}>{remain}</p>
+                <button className="btndlt" onClick={() => handleDelete(item._id)}>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     height="24px"

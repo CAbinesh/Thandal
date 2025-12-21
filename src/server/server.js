@@ -17,7 +17,7 @@ import Transactions from "../Models/Transactions.js";
 dotenv.config();
 
 const app = express();
-app.set("trust proxy", 1);
+app.set("trust proxy", 1); // Render requirement
 
 /* -------------------- MIDDLEWARE -------------------- */
 app.use(helmet());
@@ -86,16 +86,13 @@ passport.use(
   )
 );
 
-app.get(
-  "/auth/google",
-  passport.authenticate("google", { scope: ["profile", "email"] })
-);
+app.get("/auth/google", passport.authenticate("google", { scope: ["profile", "email"] }));
 
 app.get(
   "/auth/google/callback",
   passport.authenticate("google", {
     session: false,
-    failureRedirect: "/login",
+    failureRedirect: `${FRONTEND_URL}/login`,
   }),
   (req, res) => {
     const token = generateToken(req.user);
@@ -118,8 +115,10 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        const email = profile.emails?.[0]?.value;
-        if (!email) return done(new Error("GitHub email not available"), null);
+        const email =
+          profile.emails && profile.emails.length
+            ? profile.emails[0].value
+            : `${profile.username}@github.com`;
 
         let user = await User.findOne({ email });
 
@@ -146,16 +145,13 @@ passport.use(
   )
 );
 
-app.get(
-  "/auth/github",
-  passport.authenticate("github", { scope: ["user:email"] })
-);
+app.get("/auth/github", passport.authenticate("github", { scope: ["user:email"] }));
 
 app.get(
   "/auth/github/callback",
   passport.authenticate("github", {
     session: false,
-    failureRedirect: "/login",
+    failureRedirect: `${FRONTEND_URL}/login`,
   }),
   (req, res) => {
     const token = generateToken(req.user);
@@ -198,9 +194,7 @@ app.post("/logout", (req, res) => {
 
 /* -------------------- TRANSACTIONS -------------------- */
 app.get("/transactions", auth, async (req, res) => {
-  const data = await Transactions.find({ userId: req.user.id }).sort({
-    datee: -1,
-  });
+  const data = await Transactions.find({ userId: req.user.id }).sort({ datee: -1 });
   res.json(data);
 });
 
@@ -216,10 +210,7 @@ app.post("/transactions", auth, async (req, res) => {
 });
 
 app.delete("/transactions/:id", auth, async (req, res) => {
-  await Transactions.findOneAndDelete({
-    _id: req.params.id,
-    userId: req.user.id,
-  });
+  await Transactions.findOneAndDelete({ _id: req.params.id, userId: req.user.id });
   res.json({ message: "Deleted successfully" });
 });
 
