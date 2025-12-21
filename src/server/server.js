@@ -7,7 +7,7 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
-import {Strategy as GithubStrategy} from "passport-github";
+import { Strategy as GithubStrategy } from "passport-github";
 import jwt from "jsonwebtoken";
 import cookieParser from "cookie-parser";
 
@@ -17,6 +17,7 @@ import Transactions from "../Models/Transactions.js";
 dotenv.config();
 
 const app = express();
+app.set("trust proxy", 1);
 
 /* -------------------- MIDDLEWARE -------------------- */
 app.use(helmet());
@@ -29,7 +30,7 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-const FRONTEND_URL = "https://thandal.onrender.com";
+const FRONTEND_URL = "https://thandalfront.onrender.com";
 
 app.use(
   cors({
@@ -43,11 +44,9 @@ app.use(passport.initialize());
 
 /* -------------------- JWT -------------------- */
 const generateToken = (user) =>
-  jwt.sign(
-    { id: user._id, email: user.email },
-    process.env.JWT_SECRET,
-    { expiresIn: "1d" }
-  );
+  jwt.sign({ id: user._id, email: user.email }, process.env.JWT_SECRET, {
+    expiresIn: "1d",
+  });
 
 /* -------------------- GOOGLE OAUTH -------------------- */
 passport.use(
@@ -87,19 +86,23 @@ passport.use(
   )
 );
 
-app.get("/auth/google",
+app.get(
+  "/auth/google",
   passport.authenticate("google", { scope: ["profile", "email"] })
 );
 
 app.get(
   "/auth/google/callback",
-  passport.authenticate("google", { session: false, failureRedirect: "/login" }),
+  passport.authenticate("google", {
+    session: false,
+    failureRedirect: "/login",
+  }),
   (req, res) => {
     const token = generateToken(req.user);
     res.cookie("token", token, {
       httpOnly: true,
       sameSite: "none",
-      secure: process.env.NODE_ENV === "production",
+      secure: true,
     });
     res.redirect(`${FRONTEND_URL}/transactions`);
   }
@@ -143,19 +146,23 @@ passport.use(
   )
 );
 
-app.get("/auth/github",
+app.get(
+  "/auth/github",
   passport.authenticate("github", { scope: ["user:email"] })
 );
 
 app.get(
   "/auth/github/callback",
-  passport.authenticate("github", { session: false, failureRedirect: "/login" }),
+  passport.authenticate("github", {
+    session: false,
+    failureRedirect: "/login",
+  }),
   (req, res) => {
     const token = generateToken(req.user);
     res.cookie("token", token, {
       httpOnly: true,
       sameSite: "none",
-      secure: process.env.NODE_ENV === "production",
+      secure: true,
     });
     res.redirect(`${FRONTEND_URL}/transactions`);
   }
@@ -184,14 +191,16 @@ app.post("/logout", (req, res) => {
   res.clearCookie("token", {
     httpOnly: true,
     sameSite: "none",
-    secure: process.env.NODE_ENV === "production",
+    secure: true,
   });
   res.json({ message: "Logged out" });
 });
 
 /* -------------------- TRANSACTIONS -------------------- */
 app.get("/transactions", auth, async (req, res) => {
-  const data = await Transactions.find({ userId: req.user.id }).sort({ datee: -1 });
+  const data = await Transactions.find({ userId: req.user.id }).sort({
+    datee: -1,
+  });
   res.json(data);
 });
 
