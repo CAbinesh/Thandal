@@ -22,14 +22,23 @@ function App() {
       .finally(() => setLoading(false));
   }, [API_URL]);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading)
+    return (
+      <div className="loader-container">
+        <p class="loader">
+          <span>Scan</span>
+        </p>
+      </div>
+    );
 
   return (
     <AuthContext.Provider value={{ user, setUser }}>
       <Routes>
         <Route
           path="/"
-          element={user ? <Navigate to="/transactions" /> : <Navigate to="/login" />}
+          element={
+            user ? <Navigate to="/transactions" /> : <Navigate to="/login" />
+          }
         />
         <Route
           path="/transactions"
