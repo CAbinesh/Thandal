@@ -26,7 +26,7 @@ function App() {
     return (
       <div className="loader-container">
         <p class="loader">
-          <span>Scan</span>
+          <span>Optimizing…</span>
         </p>
       </div>
     );
