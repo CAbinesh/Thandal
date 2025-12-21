@@ -101,7 +101,7 @@ app.get(
       sameSite: "none",
       secure: true,
     });
-    res.redirect(`${FRONTEND_URL}/transactions`);
+    res.redirect(`${FRONTEND_URL}/`);
   }
 );
 
@@ -160,7 +160,7 @@ app.get(
       sameSite: "none",
       secure: true,
     });
-    res.redirect(`${FRONTEND_URL}/transactions`);
+    res.redirect(`${FRONTEND_URL}/`);
   }
 );
 
