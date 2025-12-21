@@ -28,6 +28,13 @@ if (loading) return <div>Loading...</div>;
     <AuthContext.Provider value={{ user, setUser }}>
       <Routes>
         <Route
+          path="/"
+          element={
+            user ? <Navigate to="/transactions" /> : <Navigate to="/login" />
+          }
+        />
+
+        <Route
           path="/transactions"
           element={user ? <Mainpg /> : <Navigate to="/login" />}
         />
