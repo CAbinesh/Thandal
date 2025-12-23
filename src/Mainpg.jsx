@@ -130,7 +130,7 @@ function Mainpg() {
             </p>
           )}
           {filteredTransactions.map((item) => {
-            const remain = (Number(item.cltnAmnt) || 0) - (Number(item.takenAmnt) || 0);
+            const remain = (Number(item.takenAmnt) || 0) - (Number(item.cltnAmnt) || 0);
             return (
               <div key={item._id} className="layer2Card">
                 <h4>{item.datee?.slice(0, 10)}</h4>
