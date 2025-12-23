@@ -134,8 +134,8 @@ function Mainpg() {
             return (
               <div key={item._id} className="layer2Card">
                 <h4>{item.datee?.slice(0, 10)}</h4>
-                <p>எடுத்துச்சென்றது: {item.takenAmnt}</p>
-                <p>வரவு: {item.cltnAmnt}</p>
+                <p>C வரவு: {item.takenAmnt}</p>
+                <p>D வரவு: {item.cltnAmnt}</p>
                 <p className={remain >= 0 ? "positive" : "negative"}>{remain}</p>
                 <button className="btndlt" onClick={() => handleDelete(item._id)}>
                   <svg
