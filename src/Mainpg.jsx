@@ -89,7 +89,7 @@ function Mainpg() {
             value={takenAmnt}
             onChange={(e) => setTakenAmnt(e.target.value)}
             required
-            placeholder="எடுத்துச்சென்றது"
+            placeholder="C வரவு "
           />
           <input
             className="input"
@@ -97,7 +97,7 @@ function Mainpg() {
             value={cltnAmnt}
             onChange={(e) => setCltnAmnt(e.target.value)}
             required
-            placeholder="வரவு"
+            placeholder="D வரவு"
           />
           <input
             className="input"
