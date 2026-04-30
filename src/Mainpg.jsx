@@ -1,7 +1,8 @@
 import React, { useContext, useEffect, useState } from "react";
 import axios from "axios";
 import "./index.css";
-import { ThumbsDown, LogOut } from "lucide-react";
+import { ThumbsDown } from "lucide-react";
+import { IoMdLogOut } from "react-icons/io";
 import { AuthContext } from "./App";
 import { useNavigate } from "react-router-dom";
 
@@ -74,11 +75,11 @@ function Mainpg() {
 
   return (
     <div className="Layer0">
-      <button className="logout" onClick={handleLogout}>
-        <LogOut className="Logout" size={20} strokeWidth={2} color="red" />
-      </button>
       <div className="h1class">
-        <h1>த ண் ட ல்</h1>
+        <h1>THANDEL</h1>
+        <button className="logout btn-1" onClick={handleLogout}>
+        <IoMdLogOut className="logout-icon" style={{fontSize:"30px"}} />Logout
+      </button>
       </div>
 
       <div className="Layer1">

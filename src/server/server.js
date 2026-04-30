@@ -30,8 +30,13 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-const FRONTEND_URL = "https://thandalfront.onrender.com";
+const CLIENT_URL =
+  process.env.CLIENT_URL || "http://localhost:5173";
 
+const FRONTEND_URL = [
+  "https://thandalfront.onrender.com",
+  "http://localhost:5173",
+];
 app.use(
   cors({
     origin: FRONTEND_URL,
@@ -92,7 +97,7 @@ app.get(
   "/auth/google/callback",
   passport.authenticate("google", {
     session: false,
-    failureRedirect: `${FRONTEND_URL}/login`,
+    failureRedirect: `${CLIENT_URL}/login`,
   }),
   (req, res) => {
     const token = generateToken(req.user);
@@ -101,7 +106,7 @@ app.get(
       sameSite: "none",
       secure: true,
     });
-    res.redirect(`${FRONTEND_URL}/`);
+    res.redirect(`${CLIENT_URL}/`);
   }
 );
 
@@ -151,7 +156,7 @@ app.get(
   "/auth/github/callback",
   passport.authenticate("github", {
     session: false,
-    failureRedirect: `${FRONTEND_URL}/login`,
+    failureRedirect: `${CLIENT_URL}/login`,
   }),
   (req, res) => {
     const token = generateToken(req.user);
@@ -160,7 +165,7 @@ app.get(
       sameSite: "none",
       secure: true,
     });
-    res.redirect(`${FRONTEND_URL}/`);
+    res.redirect(`${CLIENT_URL}/`);
   }
 );
 
