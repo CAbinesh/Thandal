@@ -16,7 +16,6 @@ input[type="number"]::-webkit-outer-spin-button {
   margin: 0;
 }
 .h1class {
-
   display: flex;
   align-items: center;
   justify-content: space-between; /* key change */
@@ -31,6 +30,7 @@ input[type="number"]::-webkit-outer-spin-button {
   width: 150px;
   height: 150px;
 }
+
 .Layer0 {
   height: 100%;
   background: #f7f0ac; /* fallback for old browsers */
@@ -95,6 +95,10 @@ input[type="number"]::-webkit-outer-spin-button {
   }
   .Layer0 h1 {
     font-size: 30px;
+  }
+  .h1class img{
+    width: 80px;
+    height: 80px;
   }
 }
 input {
