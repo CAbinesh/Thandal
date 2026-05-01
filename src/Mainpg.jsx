@@ -19,7 +19,9 @@ function Mainpg() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`${API_URL}/transactions`, { withCredentials: true });
+        const res = await axios.get(`${API_URL}/transactions`, {
+          withCredentials: true,
+        });
         setTransactions(res.data);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -34,7 +36,7 @@ function Mainpg() {
       const res = await axios.post(
         `${API_URL}/transactions`,
         { takenAmnt, cltnAmnt, datee },
-        { withCredentials: true }
+        { withCredentials: true },
       );
       setTransactions((prev) => [res.data, ...prev]);
       setTakenAmnt("");
@@ -48,7 +50,9 @@ function Mainpg() {
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure to delete ❌")) return;
     try {
-      await axios.delete(`${API_URL}/transactions/${id}`, { withCredentials: true });
+      await axios.delete(`${API_URL}/transactions/${id}`, {
+        withCredentials: true,
+      });
       setTransactions((prev) => prev.filter((item) => item._id !== id));
     } catch (error) {
       console.error("Delete failed", error);
@@ -57,7 +61,10 @@ function Mainpg() {
 
   const handleLogout = async () => {
     try {
-      await fetch(`${API_URL}/logout`, { method: "POST", credentials: "include" });
+      await fetch(`${API_URL}/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
       setUser(null);
       navigate("/login");
     } catch (error) {
@@ -76,10 +83,15 @@ function Mainpg() {
   return (
     <div className="Layer0">
       <div className="h1class">
-        <h1>THANDEL</h1>
+        <div className="title" style={{display:"flex",justifyContent:"column",alignItems:"center"}}>
+          {" "}
+          <img src="./logo.png" alt="" />
+          <h1>THANDEL</h1>
+        </div>
         <button className="logout btn-1" onClick={handleLogout}>
-        <IoMdLogOut className="logout-icon" style={{fontSize:"30px"}} />Logout
-      </button>
+          <IoMdLogOut className="logout-icon" style={{ fontSize: "30px" }} />
+          Logout
+        </button>
       </div>
 
       <div className="Layer1">
@@ -127,18 +139,26 @@ function Mainpg() {
         <div className="cardContainer">
           {transactions.length === 0 && (
             <p style={{ fontSize: "30px" }}>
-              No transactions found <ThumbsDown size={30} strokeWidth={2} color="white" />
+              No transactions found{" "}
+              <ThumbsDown size={30} strokeWidth={2} color="white" />
             </p>
           )}
           {filteredTransactions.map((item) => {
-            const remain = (Number(item.takenAmnt) || 0) - (Number(item.cltnAmnt) || 0);
+            const remain =
+              (Number(item.takenAmnt) || 0) - (Number(item.cltnAmnt) || 0);
             return (
               <div key={item._id} className="layer2Card">
                 <h4>{item.datee?.slice(0, 10)}</h4>
                 <p>C வரவு: {item.takenAmnt}</p>
                 <p>D வரவு: {item.cltnAmnt}</p>
-                <p className={remain >= 0 ? "positive" : "negative"}>{remain}</p>
-                <button className="btndlt" onClick={() => handleDelete(item._id)}>
+                <p className={remain >= 0 ? "positive" : "negative"}>
+                  {remain}
+                </p>
+                <button
+                  className="btndlt"
+                  style={{ cursor: "pointer" }}
+                  onClick={() => handleDelete(item._id)}
+                >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     height="24px"
