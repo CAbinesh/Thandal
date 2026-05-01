@@ -314,7 +314,7 @@ overflow-y: auto;
   flex-direction: column;
   justify-content: center; /* vertical center */
   align-items: center; /* horizontal center */
- background-image: url("./logo.png");
+ background-image: url("/logo.png");
 background-repeat: repeat;
 background-size: 200px;
 background-position: center;
